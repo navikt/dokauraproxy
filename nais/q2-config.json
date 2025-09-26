@@ -1,0 +1,10 @@
+{
+  "APP_NAME": "dokauraproxy",
+  "ENVIRONMENT": "q2",
+  "MIN_REPLICAS": "1",
+  "MAX_REPLICAS": "1",
+  "INGRESSES": [
+    "https://dokauraproxy.dev.intern.nav.no"
+  ],
+  "DOKAURAPROXY_TARGET_SCOPE": "api://dev-fss.pdl.pdl-api/.default"
+}

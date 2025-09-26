@@ -1,0 +1,53 @@
+kind: Application
+apiVersion: nais.io/v1alpha1
+metadata:
+  name: {{ APP_NAME }}
+  namespace: teamdokumenthandtering
+  labels:
+    team: teamdokumenthandtering
+spec:
+  env:
+    - name: DOKAURAPROXY_TARGET_SCOPE
+      value: {{ DOKAURAPROXY_TARGET_SCOPE }}
+  image: {{ image }}
+  ingresses:
+    {{#each INGRESSES}}
+       - {{ this }}
+      {{/each}}
+  prometheus:
+    enabled: true
+    path: /actuator/prometheus
+  readiness:
+    path: /actuator/health/readiness
+    port: 8080
+    initialDelay: 30
+    timeout: 3
+  liveness:
+    path: /actuator/health/liveness
+    port: 8080
+    initialDelay: 30
+    failureThreshold: 10
+  port: 8080
+  replicas:
+    min: {{ MIN_REPLICAS }}
+    max: {{ MAX_REPLICAS }}
+    cpuThresholdPercentage: 50
+  resources:
+    limits:
+      memory: 4096Mi
+    requests:
+      cpu: 60m
+      memory: 512Mi
+  observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: java
+      destinations:
+        - id: "elastic-apm"
+    logging:
+      destinations:
+        - id: elastic
+        - id: loki
+  azure:
+    application:
+      enabled: true
