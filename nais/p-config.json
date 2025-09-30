@@ -6,5 +6,7 @@
   "INGRESSES": [
     "https://dokauraproxy.intern.nav.no"
   ],
+  "NO_NAV_SECURITY_JWT_ISSUER_RESTSTS_DISCOVERYURL": "https://security-token-service.nais.adeo.no/rest/v1/sts/.well-known/openid-configuration",
+  "NO_NAV_SECURITY_JWT_ISSUER_RESTSTS_ACCEPTED_AUDIENCE": "srvdokprodbatch",
   "DOKAURAPROXY_TARGET_SCOPE": "api://prod-fss.pdl.pdl-api/.default"
 }

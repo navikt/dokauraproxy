@@ -7,6 +7,10 @@ metadata:
     team: teamdokumenthandtering
 spec:
   env:
+    - name: NO_NAV_SECURITY_JWT_ISSUER_RESTSTS_DISCOVERYURL
+      value: {{ NO_NAV_SECURITY_JWT_ISSUER_RESTSTS_DISCOVERYURL }}
+    - name: NO_NAV_SECURITY_JWT_ISSUER_RESTSTS_ACCEPTED_AUDIENCE
+      value: {{ NO_NAV_SECURITY_JWT_ISSUER_RESTSTS_ACCEPTED_AUDIENCE }}
     - name: DOKAURAPROXY_TARGET_SCOPE
       value: {{ DOKAURAPROXY_TARGET_SCOPE }}
   image: {{ image }}
@@ -51,3 +55,4 @@ spec:
   azure:
     application:
       enabled: true
+      allowAllUsers: true
