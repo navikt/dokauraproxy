@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
 import static java.util.Objects.requireNonNull;
@@ -71,6 +72,10 @@ public class RestStsToEntraIdTokenExchangeController {
 		} catch (InvalidRestStsTokenException e) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
 					.body("Provided token was not from the Rest STS issuer, or did not have the correct audience");
+		} catch (HttpClientErrorException e) {
+			log.error("Kall mot EntraID feilet: {}", e.getMessage(), e);
+			return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+					.body("Unable to acquire token. Please check the logs.");
 		} catch (Exception e) {
 			log.error("Uventet feil: {}", e.getMessage(), e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
