@@ -60,15 +60,14 @@ public class RestStsToEntraIdTokenExchangeController {
 			MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
 			formData.add("identity_provider", "azuread");
 			formData.add("target", dokAuraProxyProperties.targetScope());
-			String accessToken = requireNonNull(restClient.post()
+			String tokenResponse = requireNonNull(restClient.post()
 					.uri(naisProperties.tokenEndpoint())
 					.contentType(APPLICATION_FORM_URLENCODED)
 					.body(formData)
 					.retrieve()
-					.body(TokenResponse.class))
-					.access_token();
+					.body(String.class));
 			log.info("Hentet ny EntraId-token for applikasjon autentisert med Rest STS");
-			return ResponseEntity.ok(accessToken);
+			return ResponseEntity.ok(tokenResponse);
 		} catch (InvalidRestStsTokenException e) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
 					.body("Provided token was not from the Rest STS issuer, or did not have the correct audience");
