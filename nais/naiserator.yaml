@@ -13,6 +13,10 @@ spec:
       value: {{ NO_NAV_SECURITY_JWT_ISSUER_RESTSTS_ACCEPTED_AUDIENCE }}
     - name: DOKAURAPROXY_TARGET_SCOPE
       value: {{ DOKAURAPROXY_TARGET_SCOPE }}
+    {{#each ALLOWED_SCOPES_MAP}}
+    - name: DOKAURAPROXY_SUBJECTSCOPEMAP_{{ serviceuser }}
+      value: {{ allowed_scopes }}
+    {{/each}}
   image: {{ image }}
   ingresses:
     {{#each INGRESSES}}
