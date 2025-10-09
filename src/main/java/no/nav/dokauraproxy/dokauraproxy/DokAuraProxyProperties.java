@@ -9,7 +9,6 @@ import java.util.HashMap;
 @ConfigurationProperties("dokauraproxy")
 @Validated
 public record DokAuraProxyProperties(
-		@NotEmpty String targetScope,
 		@NotEmpty HashMap<String,String> subjectScopeMap
 
 ) {

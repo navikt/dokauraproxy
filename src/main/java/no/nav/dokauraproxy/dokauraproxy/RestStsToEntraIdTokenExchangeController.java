@@ -12,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -30,7 +29,7 @@ import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
 
 @Protected
 @RestController
-@RequestMapping(value = "rest/", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
+@RequestMapping(value = "rest/", produces = APPLICATION_JSON_VALUE)
 public class RestStsToEntraIdTokenExchangeController {
 
 	private static final Logger log = LoggerFactory.getLogger(RestStsToEntraIdTokenExchangeController.class);
@@ -57,28 +56,6 @@ public class RestStsToEntraIdTokenExchangeController {
 		this.restClient = restClientBuilder
 				.requestFactory(clientHttpRequestFactory)
 				.build();
-	}
-
-	@GetMapping("fetchEntraIdToken")
-	public ResponseEntity<String> exchangeToken(@RequestHeader("Authorization") String authorizationHeader) {
-		try {
-			validateStsToken(authorizationHeader);
-
-			String tokenResponse = getTokenFromTexas(dokAuraProxyProperties.targetScope());
-			log.info("Hentet ny EntraId-token for applikasjon autentisert med Rest STS ({}) og scope {}", MDC.get(MDC_CONSUMER_ID), dokAuraProxyProperties.targetScope());
-			return ResponseEntity.ok(tokenResponse);
-		} catch (RestStsTokenExchangeException e) {
-			log.error("Ugyldig request fra {}: {}", MDC.get(MDC_CONSUMER_ID), e.getMessage(), e);
-			return ResponseEntity.status(HttpStatus.FORBIDDEN)
-					.body("Provided token was not from the Rest STS issuer, or did not have the correct audience");
-		} catch (HttpClientErrorException e) {
-			log.error("Kall mot EntraID feilet: {}", e.getMessage(), e);
-			return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-					.body("Unable to acquire token. Please check the logs.");
-		} catch (Exception e) {
-			log.error("Uventet feil: {}", e.getMessage(), e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
 	}
 
 	@PostMapping(value = "fetchEntraIdToken", consumes = TEXT_PLAIN_VALUE)
@@ -134,12 +111,6 @@ public class RestStsToEntraIdTokenExchangeController {
 		if (!dokAuraProxyProperties.subjectScopeMap().get(token.getSubject()).contains(scope)) {
 			throw new RestStsTokenExchangeException("Subject is not authorized for requested scope " + scope);
 		}
-	}
-
-	private void validateStsToken(String authorizationHeader) {
-		TokenValidationContext tokenValidationContext = tokenValidationContextHolder.getTokenValidationContext();
-		JwtToken token = tokenValidationContext.getJwtToken(RESTSTS_ISSUER);
-		validateStsToken(token, authorizationHeader);
 	}
 
 	private void validateStsToken(JwtToken token, String authorizationHeader) {
