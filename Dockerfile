@@ -8,6 +8,6 @@ COPY --from=builder --chown=1069:1069 /build/extracted/snapshot-dependencies/ ./
 COPY --from=builder --chown=1069:1069 /build/extracted/spring-boot-loader/ ./
 COPY --from=builder --chown=1069:1069 /build/extracted/dependencies/ ./
 COPY --from=builder --chown=1069:1069 /build/extracted/application/ ./
-ENV TZ="Europe/Oslo"
 
-CMD ["-Djava.security.egd=file:/dev/./urandom", "-Dspring.profiles.active=nais", "-XX:MaxRAMPercentage=75","-server","-cp",".", "org.springframework.boot.loader.launch.JarLauncher"]
+ENV TZ="Europe/Oslo"
+CMD ["-Dspring.profiles.active=nais", "-server", "-cp", ".", "org.springframework.boot.loader.launch.JarLauncher"]
