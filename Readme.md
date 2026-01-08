@@ -1,4 +1,4 @@
-dok-aura-proxy
-==============
+dokauraproxy
+============
 
-Auth Proxy for å gi Team Dokumentløsningers Aura-baserte apper tilgang til entraId-auth
+`dokauraproxy` muliggjør autentisering via Entra ID for Team Dokumentløsningers apper som ligger i aura-sonen
