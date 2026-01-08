@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.5.6</version>
+		<version>4.0.1</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>no.nav.dokauraproxy</groupId>
@@ -16,7 +16,8 @@
 		<java.version>25</java.version>
 		<logstash-logback-encoder.version>8.1</logstash-logback-encoder.version>
 		<token-support.version>5.0.33</token-support.version>
-		<spring-cloud-starter-contract-stub-runner.version>4.3.0</spring-cloud-starter-contract-stub-runner.version>
+		<spring-cloud-starter-contract-stub-runner.version>5.0.1</spring-cloud-starter-contract-stub-runner.version>
+		<wiremock-spring-boot.version>3.10.0</wiremock-spring-boot.version>
 
 		<maven-toolchains-plugin.version>3.2.0</maven-toolchains-plugin.version>
 	</properties>
@@ -24,7 +25,11 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
+			<artifactId>spring-boot-starter-webmvc</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-restclient</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -50,15 +55,15 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-contract-stub-runner</artifactId>
 			<version>${spring-cloud-starter-contract-stub-runner.version}</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.wiremock.integrations</groupId>
+			<artifactId>wiremock-spring-boot</artifactId>
+			<version>${wiremock-spring-boot.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>no.nav.security</groupId>

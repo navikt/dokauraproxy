@@ -10,10 +10,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
+import org.wiremock.spring.EnableWireMock;
 
 import java.util.List;
 
@@ -42,7 +42,7 @@ import static org.springframework.http.MediaType.TEXT_PLAIN;
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles(value = {"itest"})
 @EnableMockOAuth2Server
-@AutoConfigureWireMock(port = DYNAMIC_PORT)
+@EnableWireMock
 class RestStsToEntraIdTokenExchangeControllerIT {
 
 	RestClient restClient = RestClient.builder().build();
