@@ -14,7 +14,7 @@
 
 	<properties>
 		<java.version>25</java.version>
-		<logstash-logback-encoder.version>8.1</logstash-logback-encoder.version>
+		<logstash-logback-encoder.version>9.0</logstash-logback-encoder.version>
 		<token-support.version>5.0.33</token-support.version>
 		<spring-cloud-starter-contract-stub-runner.version>5.0.1</spring-cloud-starter-contract-stub-runner.version>
 		<wiremock-spring-boot.version>3.10.0</wiremock-spring-boot.version>
