@@ -1,18 +1,18 @@
 package no.nav.dokauraproxy.dokauraproxy;
 
-
 import com.github.tomakehurst.wiremock.client.WireMock;
 import no.nav.security.mock.oauth2.MockOAuth2Server;
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback;
 import no.nav.security.token.support.spring.test.EnableMockOAuth2Server;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClientResponseException;
+import org.springframework.test.web.servlet.client.RestTestClient;
 import org.wiremock.spring.EnableWireMock;
 
 import java.util.List;
@@ -25,19 +25,15 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static com.github.tomakehurst.wiremock.common.Encoding.urlEncode;
-import static com.github.tomakehurst.wiremock.core.Options.DYNAMIC_PORT;
 import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
+import static org.springframework.http.HttpHeaders.ACCEPT;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
-import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.OK;
-import static org.springframework.http.HttpStatus.UNAUTHORIZED;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
-import static org.springframework.http.MediaType.TEXT_PLAIN;
+import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles(value = {"itest"})
@@ -45,7 +41,7 @@ import static org.springframework.http.MediaType.TEXT_PLAIN;
 @EnableWireMock
 class RestStsToEntraIdTokenExchangeControllerIT {
 
-	RestClient restClient = RestClient.builder().build();
+	RestTestClient restClient;
 
 	@AfterEach
 	void tearDown() {
@@ -58,12 +54,27 @@ class RestStsToEntraIdTokenExchangeControllerIT {
 	@LocalServerPort
 	int localServerPort;
 
+	@BeforeEach
+	void setup() {
+		restClient = RestTestClient.bindToServer()
+				.baseUrl("http://localhost:%d/rest/fetchEntraIdToken".formatted(localServerPort))
+				.defaultHeader(CONTENT_TYPE, TEXT_PLAIN_VALUE)
+				.defaultHeader(ACCEPT, APPLICATION_JSON_VALUE)
+				.build();
+	}
+
 	@Test
 	void requestTokenWithScopeSuccessfully() {
 		stubTexasToken();
 
 		String requestedScope = "api://dev-itest.testtest.fest/.default";
-		var token = getTokenForScope(requestedScope);
+		var token = restClient.post()
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt())
+				.body(requestedScope)
+				.exchange()
+				.expectStatus().isOk()
+				.returnResult(TokenResponse.class)
+				.getResponseBody();
 
 		verify(1, postRequestedFor(urlEqualTo("/nais/token")).withRequestBody(containing(urlEncode(requestedScope))));
 		assertThat(token.access_token()).isEqualTo("yeehaw");
@@ -72,53 +83,47 @@ class RestStsToEntraIdTokenExchangeControllerIT {
 
 	@Test
 	void requestingTokenWithScopeNoAccessIsDenied() {
-		var xyzzy = assertThrows(RestClientResponseException.class,
-				() -> getTokenForScope("api://dev-itest.testtest.no-access-api/.default"));
+		var response = restClient.post()
+				.header(AUTHORIZATION, "Bearer " + jwt())
+				.body("api://dev-itest.testtest.no-access-api/.default")
+				.exchange()
+				.expectStatus().isForbidden()
+				.returnResult(String.class)
+				.getResponseBody();
 
-		assertThat(xyzzy.getStatusCode()).isEqualTo(FORBIDDEN);
-		assertThat(xyzzy.getResponseBodyAsString()).contains("you are requesting a scope you do not have access to");
+		assertThat(response).contains("you are requesting a scope you do not have access to");
 
 		verify(0, postRequestedFor(urlEqualTo("/nais/token")));
 	}
 
 	@Test
 	void requestingTokenWithSTSTokenInvalidAudienceDenied() {
-		var xyzzy = assertThrows(RestClientResponseException.class,
-				() -> restClient.post()
-						.uri("http://localhost:{port}/rest/fetchEntraIdToken", localServerPort)
-						.contentType(TEXT_PLAIN)
-						.accept(APPLICATION_JSON)
-						.header(AUTHORIZATION, "Bearer " + jwt("srvtest", "dev-itest:invalid:audience"))
-						.body("api://dev-itest.testtest.no-access-api/.default")
-						.retrieve()
-						.body(TokenResponse.class));
+		var response = restClient.post()
+				.header(AUTHORIZATION, "Bearer " + jwt("srvtest", "dev-itest:invalid:audience"))
+				.body("api://dev-itest.testtest.no-access-api/.default")
+				.exchange()
+				.expectStatus().isUnauthorized()
+				.returnResult(String.class)
+				.getResponseBody();
 
-		assertThat(xyzzy.getStatusCode()).isEqualTo(UNAUTHORIZED);
-		assertThat(xyzzy.getResponseBodyAsString()).contains("\"error\":\"Unauthorized\"");
+		assertThat(response).contains("\"error\":\"Unauthorized\"");
 
 		verify(0, postRequestedFor(urlEqualTo("/nais/token")));
 	}
 
 	@Test
 	void requestingTokenWithMalformedScopeDenied() {
-		var xyzzy = assertThrows(RestClientResponseException.class,
-				() -> getTokenForScope("api://dev-itest.testtest.no-access-api/.default; -- drop table * "));
+		var response = restClient.post()
+				.header(AUTHORIZATION, "Bearer " + jwt())
+				.body("api://dev-itest.testtest.no-access-api/.default; -- drop table * ")
+				.exchange()
+				.expectStatus().isForbidden()
+				.returnResult(String.class)
+				.getResponseBody();
 
-		assertThat(xyzzy.getStatusCode()).isEqualTo(FORBIDDEN);
-		assertThat(xyzzy.getResponseBodyAsString()).contains("you are requesting a scope you do not have access to");
+		assertThat(response).contains("you are requesting a scope you do not have access to");
 
 		verify(0, postRequestedFor(urlEqualTo("/nais/token")));
-	}
-
-	private TokenResponse getTokenForScope(String requestedScope) {
-		return restClient.post()
-				.uri("http://localhost:{port}/rest/fetchEntraIdToken", localServerPort)
-				.contentType(TEXT_PLAIN)
-				.accept(APPLICATION_JSON)
-				.header(AUTHORIZATION, "Bearer " + jwt())
-				.body(requestedScope)
-				.retrieve()
-				.body(TokenResponse.class);
 	}
 
 	public static void stubTexasToken() {
